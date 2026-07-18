@@ -28,12 +28,96 @@ struct ContentView: View {
     private let allCategories: [String] = ["Parks", "Trails", "Museums", "Food"]
     private let allEffortLevels: [String] = ["Easy", "Moderate", "Hard"]
 
+    // Example adventure metadata
+    private let adventureTitle: String = "Apple Park Loop"
+    private let adventureDescription: String = "A scenic loop around Apple Park with viewpoints and shaded paths. Great for a short walk."
+    private let adventureCategory: String = "Parks"
+    private let adventureEffort: String = "Easy"
+    @State private var isCompleted: Bool = false
+
     var body: some View {
         NavigationStack {
-            Map(position: $position) {
-                Marker("Start Here", coordinate: adventureCoordinate)
+            ZStack(alignment: .top) {
+                Map(position: $position) {
+                    Marker("Start Here", coordinate: adventureCoordinate)
+                }
+                .ignoresSafeArea()
+
+                // Floating info card
+                VStack(alignment: .leading, spacing: 8) {
+                    // Pills row
+                    HStack(spacing: 8) {
+                        Text(adventureCategory)
+                            .font(.caption.weight(.semibold))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Capsule().fill(Color.blue.opacity(0.15)))
+                            .foregroundStyle(.blue)
+                        Text(adventureEffort)
+                            .font(.caption.weight(.semibold))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Capsule().fill(Color.green.opacity(0.15)))
+                            .foregroundStyle(.green)
+                        Spacer(minLength: 0)
+                    }
+
+                    // Title
+                    Text(adventureTitle)
+                        .font(.title2.weight(.bold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+
+                    // Description
+                    Text(adventureDescription)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(3)
+
+                    // Status row with button bottom-right
+                    HStack {
+                        Spacer()
+                        Button(action: { isCompleted.toggle() }) {
+                            Label(isCompleted ? "Completed" : "Mark Complete",
+                                  systemImage: isCompleted ? "checkmark.seal.fill" : "checkmark.seal")
+                                .labelStyle(.titleAndIcon)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(isCompleted ? .green : .accentColor)
+                    }
+                }
+                .padding(16)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .shadow(color: Color.black.opacity(0.15), radius: 12, x: 0, y: 8)
+                )
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                
+                // Floating Next Adventure button
+                VStack {
+                    Spacer()
+                    Button(action: {
+                        // Advance to next adventure action
+                    }) {
+                        HStack {
+                            Spacer()
+                            Label("Next Adventure", systemImage: "arrow.right.circle.fill")
+                                .font(.headline)
+                            Spacer()
+                        }
+                        .padding(.vertical, 14)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.accentColor)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 6)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 24)
+                }
             }
-            .ignoresSafeArea()
             .navigationTitle("Micro Adventures")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.large)
