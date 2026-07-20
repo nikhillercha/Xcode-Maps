@@ -9,37 +9,32 @@ import SwiftUI
 import MapKit
 
 struct ContentView: View {
-    // Coordinate for the featured micro adventure (example: Apple Park)
-    private let adventureCoordinate = CLLocationCoordinate2D(latitude: 37.3349, longitude: -122.0090)
-    
-    // Camera position centered on the marker
-    @State private var position: MapCameraPosition = .region(
-        MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: 37.3349, longitude: -122.0090),
-            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
-        )
-    )
-    
     // Filtering state
     @State private var selectedCategories: Set<String> = []
     @State private var selectedEffortLevels: Set<String> = []
 
-    // Example options (customize as needed)
-    private let allCategories: [String] = ["Parks", "Trails", "Museums", "Food"]
-    private let allEffortLevels: [String] = ["Easy", "Moderate", "Hard"]
+    // Adventures data
+    @State private var adventures: [Adventure] = SampleAdventures.all
+    @State private var currentIndex: Int = 0
 
-    // Example adventure metadata
-    private let adventureTitle: String = "Apple Park Loop"
-    private let adventureDescription: String = "A scenic loop around Apple Park with viewpoints and shaded paths. Great for a short walk."
-    private let adventureCategory: String = "Parks"
-    private let adventureEffort: String = "Easy"
-    @State private var isCompleted: Bool = false
+    private var currentAdventure: Adventure { adventures[currentIndex] }
+    
+    private var allCategories: [String] { Array(Set(adventures.map { $0.category })).sorted() }
+    private var allEffortLevels: [String] { Array(Set(adventures.map { $0.effortLevel })).sorted() }
+
+    // Camera position centered on the marker
+    @State private var position: MapCameraPosition = .region(
+        MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: SampleAdventures.all.first?.latitude ?? 37.3349, longitude: SampleAdventures.all.first?.longitude ?? -122.0090),
+            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+        )
+    )
 
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
                 Map(position: $position) {
-                    Marker("Start Here", coordinate: adventureCoordinate)
+                    Marker(currentAdventure.locationName, coordinate: currentAdventure.coordinate)
                 }
                 .ignoresSafeArea()
 
@@ -47,13 +42,13 @@ struct ContentView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     // Pills row
                     HStack(spacing: 8) {
-                        Text(adventureCategory)
+                        Text(currentAdventure.category)
                             .font(.caption.weight(.semibold))
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
                             .background(Capsule().fill(Color.blue.opacity(0.15)))
                             .foregroundStyle(.blue)
-                        Text(adventureEffort)
+                        Text(currentAdventure.effortLevel)
                             .font(.caption.weight(.semibold))
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
@@ -63,13 +58,13 @@ struct ContentView: View {
                     }
 
                     // Title
-                    Text(adventureTitle)
+                    Text(currentAdventure.title)
                         .font(.title2.weight(.bold))
                         .foregroundStyle(.primary)
                         .lineLimit(2)
 
                     // Description
-                    Text(adventureDescription)
+                    Text(currentAdventure.description)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(3)
@@ -77,13 +72,15 @@ struct ContentView: View {
                     // Status row with button bottom-right
                     HStack {
                         Spacer()
-                        Button(action: { isCompleted.toggle() }) {
-                            Label(isCompleted ? "Completed" : "Mark Complete",
-                                  systemImage: isCompleted ? "checkmark.seal.fill" : "checkmark.seal")
+                        Button(action: {
+                            adventures[currentIndex].isCompleted.toggle()
+                        }) {
+                            Label(currentAdventure.isCompleted ? "Completed" : "Mark Complete",
+                                  systemImage: currentAdventure.isCompleted ? "checkmark.seal.fill" : "checkmark.seal")
                                 .labelStyle(.titleAndIcon)
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(isCompleted ? .green : .accentColor)
+                        .tint(currentAdventure.isCompleted ? .green : .accentColor)
                     }
                 }
                 .padding(16)
@@ -99,7 +96,17 @@ struct ContentView: View {
                 VStack {
                     Spacer()
                     Button(action: {
-                        // Advance to next adventure action
+                        if !adventures.isEmpty {
+                            currentIndex = (currentIndex + 1) % adventures.count
+                            withAnimation(.easeInOut) {
+                                position = .region(
+                                    MKCoordinateRegion(
+                                        center: currentAdventure.coordinate,
+                                        span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+                                    )
+                                )
+                            }
+                        }
                     }) {
                         HStack {
                             Spacer()
